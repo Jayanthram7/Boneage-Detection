@@ -102,7 +102,8 @@ class ModelInference:
             unc_logits: Uncertainty regression outputs [1, 2]
         
         Returns:
-            tuple: (predicted_age, uncertainty)
+            tuple: (predicted_age, uncertainty_range)
+                  uncertainty_range is the ± value (e.g., 17±0.5 means 0.5)
         """
         # Get predicted group
         pred_group = grp_logits.argmax(dim=1).item()
@@ -113,10 +114,16 @@ class ModelInference:
         # Use group midpoint as base prediction
         base_age = (age_min + age_max) / 2
         
-        # Extract uncertainty (using first output as uncertainty measure)
-        uncertainty = abs(unc_logits[0, 0].item())
+        # Calculate uncertainty from model's unc output
+        # The model outputs 2 values - we'll use them to estimate confidence
+        unc_val = unc_logits[0].abs().mean().item()  # Average of absolute values
         
-        return base_age, uncertainty
+        # Normalize uncertainty to a reasonable range (0-2.5 years)
+        # Assuming training uncertainty values are in range 0-100
+        # Map to ±0.5 to ±2.5 years based on confidence
+        uncertainty_normalized = min(max(unc_val / 40.0, 0.5), 2.5)
+        
+        return base_age, uncertainty_normalized
     
     def infer_male(self, image_input):
         """

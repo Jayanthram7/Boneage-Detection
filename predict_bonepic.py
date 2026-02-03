@@ -37,16 +37,14 @@ try:
         print("👨 MALE MODEL PREDICTION")
         print("-" * 60)
         male = result['male_prediction']
-        print(f"  🎯 Predicted Age: {male['age']} years")
-        print(f"  📉 Uncertainty (σ): {male['uncertainty_sigma']}")
+        print(f"  🎯 Predicted Age: {male['age']} ± {male['uncertainty_sigma']} years")
         print(f"  🔥 Grad-CAM Heatmap: {male['gradcam_path']}")
         
         print("\n" + "-" * 60)
         print("👩 FEMALE MODEL PREDICTION")
         print("-" * 60)
         female = result['female_prediction']
-        print(f"  🎯 Predicted Age: {female['age']} years")
-        print(f"  📉 Uncertainty (σ): {female['uncertainty_sigma']}")
+        print(f"  🎯 Predicted Age: {female['age']} ± {female['uncertainty_sigma']} years")
         print(f"  🔥 Grad-CAM Heatmap: {female['gradcam_path']}")
         
         print("\n" + "=" * 60)

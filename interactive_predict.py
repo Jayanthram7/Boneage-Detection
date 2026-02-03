@@ -195,16 +195,14 @@ def display_results(result):
     print("👨 MALE MODEL PREDICTION")
     print("-" * 70)
     male = result['male_prediction']
-    print(f"  🎯 Estimated Age: {male['age']} years")
-    print(f"  📉 Uncertainty (σ): {male['uncertainty_sigma']}")
+    print(f"  🎯 Estimated Age: {male['age']} ± {male['uncertainty_sigma']} years")
     print(f"  🔥 Grad-CAM: {male['gradcam_path']}")
     
     print("\n" + "-" * 70)
     print("👩 FEMALE MODEL PREDICTION")
     print("-" * 70)
     female = result['female_prediction']
-    print(f"  🎯 Estimated Age: {female['age']} years")
-    print(f"  📉 Uncertainty (σ): {female['uncertainty_sigma']}")
+    print(f"  🎯 Estimated Age: {female['age']} ± {female['uncertainty_sigma']} years")
     print(f"  🔥 Grad-CAM: {female['gradcam_path']}")
     
     print("\n" + "=" * 70)
