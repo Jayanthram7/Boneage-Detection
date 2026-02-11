@@ -25,6 +25,20 @@ STORAGE_DIR = "storage/patients"
 os.makedirs(STORAGE_DIR, exist_ok=True)
 
 
+def normalize_path_for_storage(path):
+    """
+    Normalize path for cross-platform storage in database.
+    Converts backslashes to forward slashes for compatibility.
+    
+    Args:
+        path: File path string
+    
+    Returns:
+        str: Normalized path with forward slashes
+    """
+    return path.replace("\\", "/")
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and models on startup"""
@@ -93,7 +107,7 @@ async def predict_bone_age(
         if not db_patient:
             db_patient = Patient(
                 patient_id=patient_id,
-                image_path=original_image_path
+                image_path=normalize_path_for_storage(original_image_path)
             )
             db.add(db_patient)
             db.commit()
@@ -126,6 +140,7 @@ async def predict_bone_age(
             model_type='male'
         )
         male_gradcam_path = os.path.join(patient_dir, "male_gradcam.png")
+        male_gradcam_path_normalized = normalize_path_for_storage(male_gradcam_path)
         inference_model.male_gradcam.save_visualization(
             pil_image,
             male_heatmap,
@@ -144,6 +159,7 @@ async def predict_bone_age(
             model_type='female'
         )
         female_gradcam_path = os.path.join(patient_dir, "female_gradcam.png")
+        female_gradcam_path_normalized = normalize_path_for_storage(female_gradcam_path)
         inference_model.female_gradcam.save_visualization(
             pil_image,
             female_heatmap,
@@ -171,10 +187,10 @@ async def predict_bone_age(
             patient_id=db_patient.id,
             male_age=male_age,
             male_uncertainty=male_uncertainty,
-            male_gradcam_path=male_gradcam_path,
+            male_gradcam_path=male_gradcam_path_normalized,
             female_age=female_age,
             female_uncertainty=female_uncertainty,
-            female_gradcam_path=female_gradcam_path,
+            female_gradcam_path=female_gradcam_path_normalized,
             mlflow_run_id=run_id
         )
         db.add(db_prediction)
@@ -182,6 +198,10 @@ async def predict_bone_age(
         db.refresh(db_prediction)
         
         # ===== STEP 10: Return Dual Prediction =====
+        # Use relative paths for portability across different machines
+        male_gradcam_relative = os.path.relpath(male_gradcam_path)
+        female_gradcam_relative = os.path.relpath(female_gradcam_path)
+        
         response = {
             "status": "success",
             "patient_id": patient_id,
@@ -190,13 +210,13 @@ async def predict_bone_age(
             "male_prediction": {
                 "age": round(male_age, 2),
                 "uncertainty_sigma": round(male_uncertainty, 3),
-                "gradcam_path": male_gradcam_path,
+                "gradcam_path": male_gradcam_relative,
                 "gradcam_url": f"/storage/{patient_id}/male_gradcam.png"
             },
             "female_prediction": {
                 "age": round(female_age, 2),
                 "uncertainty_sigma": round(female_uncertainty, 3),
-                "gradcam_path": female_gradcam_path,
+                "gradcam_path": female_gradcam_relative,
                 "gradcam_url": f"/storage/{patient_id}/female_gradcam.png"
             },
             "timestamp": datetime.now().isoformat(),
